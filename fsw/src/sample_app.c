@@ -52,14 +52,11 @@ void SAMPLE_APP_Main(void)
     CFE_SB_Buffer_t *SBBufPtr;
 
     /*
-    ** Register the app with Executive services
-    */
-    CFE_ES_RegisterApp();
-
-    /*
-    ** Create the first Performance Log entry
-    */
-    CFE_ES_PerfLogEntry(SAMPLE_APP_PERF_ID);
+     * Testing ES
+     */
+    TESTING_APP_TESTING_ES_RegisterApp();
+    TESTING_APP_TESTING_ES_PerfLogEntry();
+    TESTING_APP_TESTING_ES_GetAppID();
 
     /*
     ** Perform application specific initialization
@@ -119,8 +116,6 @@ void SAMPLE_APP_Main(void)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
 int32 SAMPLE_APP_Init(void)
 {
-    int32 status;
-
     SAMPLE_APP_Data.RunStatus = CFE_ES_RunStatus_APP_RUN;
 
     /*
@@ -156,73 +151,187 @@ int32 SAMPLE_APP_Init(void)
     SAMPLE_APP_Data.EventFilters[6].Mask    = 0x0000;
 
     /*
-    ** Register the events
-    */
-    status = CFE_EVS_Register(SAMPLE_APP_Data.EventFilters, SAMPLE_APP_EVENT_COUNTS, CFE_EVS_EventFilter_BINARY);
-    if (status != CFE_SUCCESS)
-    {
-        CFE_ES_WriteToSysLog("Sample App: Error Registering Events, RC = 0x%08lX\n", (unsigned long)status);
-        return (status);
-    }
+     * Testing EVS
+     */
+    TESTING_APP_Testing_EVS_Register();
+    TESTING_APP_Testing_EVS_SendEvent();
+    TESTING_APP_Testing_EVS_SendEventWithAppId();
 
     /*
-    ** Initialize housekeeping packet (clear user data area).
-    */
-    CFE_MSG_Init(&SAMPLE_APP_Data.HkTlm.TlmHeader.Msg, SAMPLE_APP_HK_TLM_MID, sizeof(SAMPLE_APP_Data.HkTlm));
+     * Testing TIME
+     */
+    TESTING_APP_Testing_TIME_GetTime();
+    TESTING_APP_Testing_TIME_GetTAI();
+    TESTING_APP_Testing_TIME_GetUTC();
 
     /*
-    ** Create Software Bus message pipe.
+    ** Testing messaging
     */
-    status = CFE_SB_CreatePipe(&SAMPLE_APP_Data.CommandPipe, SAMPLE_APP_Data.PipeDepth, SAMPLE_APP_Data.PipeName);
-    if (status != CFE_SUCCESS)
-    {
-        CFE_ES_WriteToSysLog("Sample App: Error creating pipe, RC = 0x%08lX\n", (unsigned long)status);
-        return (status);
-    }
+    TESTING_APP_Testing_CFE_MSG_Init();
+    TESTING_APP_Testing_CFE_SB_CreatePipe();
+    TESTING_APP_Testing_SB_Subscribe();
 
     /*
-    ** Subscribe to Housekeeping request commands
-    */
-    status = CFE_SB_Subscribe(SAMPLE_APP_SEND_HK_MID, SAMPLE_APP_Data.CommandPipe);
-    if (status != CFE_SUCCESS)
-    {
-        CFE_ES_WriteToSysLog("Sample App: Error Subscribing to HK request, RC = 0x%08lX\n", (unsigned long)status);
-        return (status);
-    }
-
-    /*
-    ** Subscribe to ground command packets
-    */
-    status = CFE_SB_Subscribe(SAMPLE_APP_CMD_MID, SAMPLE_APP_Data.CommandPipe);
-    if (status != CFE_SUCCESS)
-    {
-        CFE_ES_WriteToSysLog("Sample App: Error Subscribing to Command, RC = 0x%08lX\n", (unsigned long)status);
-
-        return (status);
-    }
-
-    /*
-    ** Register Table(s)
-    */
-    status = CFE_TBL_Register(&SAMPLE_APP_Data.TblHandles[0], "SampleAppTable", sizeof(SAMPLE_APP_Table_t),
-                              CFE_TBL_OPT_DEFAULT, SAMPLE_APP_TblValidationFunc);
-    if (status != CFE_SUCCESS)
-    {
-        CFE_ES_WriteToSysLog("Sample App: Error Registering Table, RC = 0x%08lX\n", (unsigned long)status);
-
-        return (status);
-    }
-    else
-    {
-        status = CFE_TBL_Load(SAMPLE_APP_Data.TblHandles[0], CFE_TBL_SRC_FILE, SAMPLE_APP_TABLE_FILE);
-    }
-
-    CFE_EVS_SendEvent(SAMPLE_APP_STARTUP_INF_EID, CFE_EVS_EventType_INFORMATION, "SAMPLE App Initialized.%s",
-                      SAMPLE_APP_VERSION_STRING);
+     * Testing table service
+     */
+    TESTING_APP_Testing_TBL_Register();
+    TESTING_APP_Testing_TBL_Load();
+    TESTING_APP_Testing_TBL_GetInfo();
 
     return (CFE_SUCCESS);
 
 } /* End of SAMPLE_APP_Init() */
+
+void TESTING_APP_TESTING_ES_RegisterApp(void) {
+    int32 status;
+    status = CFE_ES_RegisterApp();
+    if (status != CFE_SUCCESS)
+    {
+        CFE_ES_WriteToSysLog("Testing app: Error in CFE_ES_RegisterApp(): %08lx\n", (unsigned long)status);
+        return;
+    }
+}
+
+void TESTING_APP_TESTING_ES_PerfLogEntry(void) {
+    CFE_ES_PerfLogEntry(SAMPLE_APP_PERF_ID);
+}
+
+void TESTING_APP_TESTING_ES_GetAppID(void) {
+    int32 status;
+    CFE_ES_ResourceID_t  AppId;
+    status = CFE_ES_GetAppID(&AppId);
+    if (status != CFE_SUCCESS)
+    {
+        CFE_ES_WriteToSysLog("Testing app: Error sending event, status = 0x%08lX\n", (unsigned long)status);
+        return;
+    }
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Successfully got App ID from Executive Service, App ID is: %ld", CFE_ES_ResourceID_ToInteger(AppId));
+}
+
+void TESTING_APP_Testing_EVS_Register(void) {
+    int32 status;
+    status = CFE_EVS_Register(SAMPLE_APP_Data.EventFilters, SAMPLE_APP_EVENT_COUNTS, CFE_EVS_EventFilter_BINARY);
+    if (status != CFE_SUCCESS)
+    {
+        CFE_ES_WriteToSysLog("Testing app: Error Registering Events, RC = 0x%08lX\n", (unsigned long)status);
+        return;
+    }
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Successfully registered with EVS");
+}
+
+void TESTING_APP_Testing_EVS_SendEvent(void) {
+    int32 status;
+    status = CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Testing sending event");
+    if (status != CFE_SUCCESS)
+    {
+        CFE_ES_WriteToSysLog("Testing app: Error sending event, RC = 0x%08lX\n", (unsigned long)status);
+        return;
+    }
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Successfully sent an event to EVS");
+}
+
+void TESTING_APP_Testing_EVS_SendEventWithAppId(void) {
+    int32 status;
+    CFE_ES_ResourceID_t  AppId;
+    CFE_ES_GetAppID(&AppId);
+    status = CFE_EVS_SendEventWithAppID(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, CFE_ES_ResourceID_ToInteger(AppId), "Testing App: Testing sending event with App ID");
+    if (status != CFE_SUCCESS)
+    {
+        CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Failed to send event with App ID");
+        return;
+    }
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Successfully called SendEventWithAppId");
+}
+
+void TESTING_APP_Testing_TBL_Register(void) {
+    int32 status;
+    status = CFE_TBL_Register(&SAMPLE_APP_Data.TblHandles[0], "SampleAppTable", sizeof(SAMPLE_APP_Table_t),
+                              CFE_TBL_OPT_DEFAULT, SAMPLE_APP_TblValidationFunc);
+    if (status != CFE_SUCCESS)
+    {
+        CFE_ES_WriteToSysLog("Testing App: Error Registering Table, RC = 0x%08lX\n", (unsigned long)status);
+        return;
+    }
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Successfully registered table SampleAppTable");
+}
+
+void TESTING_APP_Testing_TBL_Load(void) {
+    int32 status;
+    status = CFE_TBL_Load(SAMPLE_APP_Data.TblHandles[0], CFE_TBL_SRC_FILE, SAMPLE_APP_TABLE_FILE);
+    if (status != CFE_SUCCESS)
+    {
+        CFE_ES_WriteToSysLog("Testing App: Error Loading Table, RC = 0x%08lX\n", (unsigned long)status);
+        return;
+    }
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Successfully loaded table");
+}
+
+void TESTING_APP_Testing_TBL_GetInfo(void) {
+    int32 status;
+    CFE_TBL_Info_t TblInfoPtr;
+    status = CFE_TBL_GetInfo(&TblInfoPtr, "SAMPLE_APP.SampleAppTable");
+    if (status != CFE_SUCCESS)
+    {
+        CFE_ES_WriteToSysLog("Testing App: Error getting info for table, RC = 0x%08lX\n", (unsigned long)status);
+        return;
+    }
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Successfully got table info: size is: %ld", TblInfoPtr.Size);
+}
+
+void TESTING_APP_Testing_TIME_GetTime(void) {
+    CFE_TIME_SysTime_t Time;
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Start Testing CFE_TIME_GetTime");
+    Time = CFE_TIME_GetTime();
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: CFE_TIME_GetTime output: %d", Time.Seconds);
+}
+
+void TESTING_APP_Testing_TIME_GetTAI(void) {
+    CFE_TIME_SysTime_t TAI;
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Start Testing CFE_TIME_GetTAI");
+    TAI = CFE_TIME_GetTAI();
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: CFE_TIME_GetTAI output: %d", TAI.Seconds);
+}
+
+void TESTING_APP_Testing_TIME_GetUTC(void) {
+    CFE_TIME_SysTime_t UTC;
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Start Testing CFE_TIME_GetUTC");
+    UTC = CFE_TIME_GetUTC();
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: CFE_TIME_GetUTC output: %d", UTC.Seconds);
+}
+
+void TESTING_APP_Testing_CFE_MSG_Init(void) {
+    int32 status;
+    status = CFE_MSG_Init(&SAMPLE_APP_Data.HkTlm.TlmHeader.Msg, SAMPLE_APP_HK_TLM_MID, sizeof(SAMPLE_APP_Data.HkTlm));
+    if (status != CFE_SUCCESS)
+    {
+        CFE_ES_WriteToSysLog("Testing App: Error calling CFE_MSG_Init, RC = 0x%08lX\n", (unsigned long)status);
+        return;
+    }
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Successfully called CFE_MSG_Init");
+}
+
+void TESTING_APP_Testing_CFE_SB_CreatePipe(void) {
+    int32 status;
+    status = CFE_SB_CreatePipe(&SAMPLE_APP_Data.CommandPipe, SAMPLE_APP_Data.PipeDepth, SAMPLE_APP_Data.PipeName);
+    if (status != CFE_SUCCESS)
+    {
+        CFE_ES_WriteToSysLog("Sample App: Error creating pipe, RC = 0x%08lX\n", (unsigned long)status);
+        return ;
+    }
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Successfully created message pipe");
+}
+
+void TESTING_APP_Testing_SB_Subscribe(void) {
+    int32 status;
+    status = CFE_SB_Subscribe(SAMPLE_APP_SEND_HK_MID, SAMPLE_APP_Data.CommandPipe);
+    if (status != CFE_SUCCESS)
+    {
+        CFE_ES_WriteToSysLog("Sample App: Error Subscribing to HK request, RC = 0x%08lX\n", (unsigned long)status);
+        return;
+    }
+    CFE_EVS_SendEvent(SAMPLE_APP_TESTING_INFO, CFE_EVS_EventType_INFORMATION, "Testing App: Successfully subscribed");
+}
+
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
 /*  Name:  SAMPLE_APP_ProcessCommandPacket                                    */

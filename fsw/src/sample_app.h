@@ -102,6 +102,22 @@ typedef struct
 **       functions are not called from any other source module.
 */
 void  SAMPLE_APP_Main(void);
+void  TESTING_APP_TESTING_ES_RegisterApp(void);
+void  TESTING_APP_TESTING_ES_PerfLogEntry(void);
+void  TESTING_APP_TESTING_ES_GetAppID(void);
+void  TESTING_APP_Testing_Time_Module(void);
+void  TESTING_APP_Testing_EVS_Register(void);
+void  TESTING_APP_Testing_EVS_SendEvent(void);
+void  TESTING_APP_Testing_EVS_SendEventWithAppId(void);
+void  TESTING_APP_Testing_TBL_Register(void);
+void  TESTING_APP_Testing_TBL_Load(void);
+void  TESTING_APP_Testing_TBL_GetInfo(void);
+void  TESTING_APP_Testing_TIME_GetTime(void);
+void  TESTING_APP_Testing_TIME_GetTAI(void);
+void  TESTING_APP_Testing_TIME_GetUTC(void);
+void  TESTING_APP_Testing_CFE_MSG_Init(void);
+void  TESTING_APP_Testing_CFE_SB_CreatePipe(void);
+void  TESTING_APP_Testing_SB_Subscribe(void);
 int32 SAMPLE_APP_Init(void);
 void  SAMPLE_APP_ProcessCommandPacket(CFE_SB_Buffer_t *SBBufPtr);
 void  SAMPLE_APP_ProcessGroundCommand(CFE_SB_Buffer_t *SBBufPtr);
